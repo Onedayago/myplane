@@ -1,11 +1,7 @@
-/*
-    游戏主界面
- */
+
 package com.example.my;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -14,71 +10,63 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
-import com.example.my.Enemy.EnemySmall;
-import com.example.my.Plane.MyPlane;
+
+import com.example.my.Constant.Game;
+import com.example.my.Constant.GameSound;
+import com.example.my.Enemy.EnemyBullet;
+import com.example.my.Enemy.EnemyPlane;
+import com.example.my.My.MyBullet;
+import com.example.my.My.MyPlane;
 
 import java.util.ArrayList;
 
 public class GameMainView extends SurfaceView implements SurfaceHolder.Callback,Runnable {
 
-    private Paint paint;  //画笔
-
+    private Canvas canvas;  //画布
     private SurfaceHolder surfaceHolder;
+    private float screenW;
+    private float screenH;
+    private Paint paint;
+    private Thread thread;
+    private Back back;
+    private MyPlane myPlane;
+    public ArrayList<MyBullet> myBullets = new ArrayList<MyBullet>();
+    public ArrayList<EnemyPlane> enemyPlanes = new ArrayList<>();
+    public ArrayList<EnemyBullet> enemyBullets = new ArrayList<>();
+    private long startTime = 0;
+    private long endtTime = 0;
 
-    private Thread thread; //绘制线程
-
-    private Canvas canvas; //
-
-    private MyPlane myPlane; //我的飞机
-
-    private  long startTime = 0; //这次绘制的开始时间
-    private long endTime = 0; //这次绘制的结束时间
-
-    private Bitmap bg;
-
-    private float screen_width;
-    private float screen_height;
-    private float scale_x = 1;
-    private float scale_y = 1;
-
-    private float bg_y = 0;
-    private float by_y2 = 0;
-
-    private ArrayList<EnemySmall> enemySmalls = new ArrayList<>();
 
     public GameMainView(Context context) {
         super(context);
-        init();
-    }
-
-    private void init() {
-        surfaceHolder = this.getHolder();
+        this.surfaceHolder = this.getHolder();
         surfaceHolder.addCallback(this);
-        paint = new Paint();
-        thread = new Thread(this);
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        screen_width = this.getWidth();
-        screen_height = this.getHeight();
+        this.screenW = this.getWidth();
+        this.screenH = this.getHeight();
+        paint = new Paint();
+        thread = new Thread(this);
 
-        //我的飞机初始化
-        myPlane = new MyPlane(getResources(), R.drawable.myplane);
-        myPlane.setX((screen_width-myPlane.getW())/2);
-        myPlane.setY(screen_height-myPlane.getH());
-        myPlane.setScreen_width(screen_width);
-        myPlane.setScreen_height(screen_height);
+        this.initMyPlane();
+        this.initBack();
 
-        //背景初始化
-        bg = BitmapFactory.decodeResource(getResources(), R.drawable.bg_01);
+        if(!thread.isAlive()){
+            thread.start();
+        }
+    }
 
-        this.scale_x = screen_width / bg.getWidth();
-        this.scale_y = screen_height / bg.getHeight();
+    private void initBack() {
+        back = new Back(this.getResources(), R.drawable.bg_01, this.screenW, this.screenH);
+    }
 
-        this.by_y2 = this.bg_y - screen_height;
-
-        thread.start();
+    private void initMyPlane() {
+        myPlane = new MyPlane(this.getResources(), R.drawable.myplane, this.screenW, this.screenH);
+        myPlane.setX(this.screenW/2-myPlane.getW()/2);
+        myPlane.setY(this.screenH-myPlane.getH());
+        myPlane.setShootSpeed(Game.MYPLANESHOOTSPEED);
     }
 
     @Override
@@ -104,82 +92,140 @@ public class GameMainView extends SurfaceView implements SurfaceHolder.Callback,
     @Override
     public void run() {
         while (true){
-            startTime = System.currentTimeMillis();
+
+            this.endtTime = System.currentTimeMillis();
+
+            if(this.endtTime - this.startTime > Game.PRODUCEENEMYSPEED){
+                this.startTime = this.endtTime;
+                this.produceEnemy();
+            }
+
             try {
                 canvas = surfaceHolder.lockHardwareCanvas();
                 canvas.drawColor(Color.BLACK);
-                this.drawBg();
+                this.drawBack();
                 this.drawMyPlane();
-                this.drawEnemySmall();
+                this.drawMyBullet();
+                this.drawEnemy();
                 this.boom();
+                this.drawEnemyBullets();
             }catch (Exception e){
 
             }finally {
-                if (canvas != null)
+                if(canvas != null){
                     surfaceHolder.unlockCanvasAndPost(canvas);
-            }
-
-
-            if(startTime - endTime >2000){
-                endTime = startTime;
-
-                //生产敌机
-                EnemySmall enemySmall = new EnemySmall(getResources(), R.drawable.small);
-                enemySmall.setScreen_width(screen_width);
-                enemySmall.setScreen_height(screen_height);
-                enemySmall.setX((float) (Math.random()*screen_width));
-                enemySmall.setY(0);
-                enemySmalls.add(enemySmall);
-            }
-
-        }
-    }
-
-    //我的子弹打中小型敌机
-    public void boom () {
-        for(int i = 0; i < enemySmalls.size(); i++){
-            for(int j= 0; j< myPlane.MyBulletArr.size(); j++){
-                enemySmalls.get(i).boom(myPlane.MyBulletArr.get(j));
+                }
             }
         }
     }
 
-    //绘制小型敌机
-    public void drawEnemySmall () {
-        for(int i = 0; i < enemySmalls.size(); i++){
-            if(enemySmalls.get(i).getY() > screen_height || !enemySmalls.get(i).isLive()){
-                enemySmalls.get(i).release();
-                enemySmalls.remove(i);
+    private void drawEnemyBullets() {
+        for(int i = 0; i < enemyBullets.size(); i++){
+            if(!enemyBullets.get(i).isLive()){
+                enemyBullets.remove(i);
             }
-            enemySmalls.get(i).draw(canvas, paint);
+        }
+
+        for(int i = 0; i < enemyBullets.size(); i++){
+            enemyBullets.get(i).draw(this.canvas, this.paint, this);
         }
     }
 
-    //画背景
-    public void drawBg() {
-
-        if (bg_y > by_y2) {
-            bg_y += 1;
-            by_y2 = bg_y - bg.getHeight();
-        } else {
-            by_y2 += 1;
-            bg_y = by_y2 - bg.getHeight();
+    public boolean CheckRectCollsion(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
+        if (x1 >= x2 && x1 >= x2 + w2) {
+            return false;
+        } else if (x1 <= x2 && x1 + w1 <= x2) {
+            return false;
+        } else if (y1 >= y2 && y1 >= y2 + h2) {
+            return false;
+        } else if (y1 <= y2 && y1 + h1 <= y2) {
+            return false;
         }
-        if (bg_y >= bg.getHeight()) {
-            bg_y = by_y2 - bg.getHeight();
-        } else if (by_y2 >= bg.getHeight()) {
-            by_y2 = bg_y - bg.getHeight();
-        }
-
-        canvas.save();
-        canvas.scale(this.scale_x,this.scale_y, 0, 0);
-        canvas.drawBitmap(bg, 0, this.by_y2, paint);
-        canvas.drawBitmap(bg, 0, this.bg_y, paint);
-        canvas.restore();
+        return true;
     }
 
-    //画我的飞机
-    public void drawMyPlane() {
-        myPlane.draw(canvas, paint);
+    private void boom() {
+        for(int i = 0; i < enemyPlanes.size(); i++){
+            EnemyPlane enemyPlane = enemyPlanes.get(i);
+            for(int j = 0; j < myBullets.size(); j++){
+                MyBullet myBullet = myBullets.get(j);
+                if(this.CheckRectCollsion(
+                        enemyPlane.getX(),
+                        enemyPlane.getY(),
+                        enemyPlane.getW(),
+                        enemyPlane.getH(),
+                        myBullet.getX(),
+                        myBullet.getY(),
+                        myBullet.getW(),
+                        myBullet.getH()
+                )){
+                    enemyPlane.setBoom(true);
+                    myBullet.setLive(false);
+                    GameSoundPool.play(GameSound.EXPLOSION,0);
+                    break;
+                }
+            }
+
+            if(this.CheckRectCollsion(
+                    enemyPlane.getX(),
+                    enemyPlane.getY(),
+                    enemyPlane.getW(),
+                    enemyPlane.getH(),
+                    myPlane.getX(),
+                    myPlane.getY(),
+                    myPlane.getW(),
+                    myPlane.getH()
+            )){
+                enemyPlane.setBoom(true);
+            }
+
+        }
+
     }
+
+    private void drawEnemy() {
+
+        for(int i = 0; i < enemyPlanes.size(); i++){
+            if(!enemyPlanes.get(i).isLive()){
+                enemyPlanes.remove(i);
+            }
+        }
+
+        for(int i = 0; i < enemyPlanes.size(); i++){
+            enemyPlanes.get(i).draw(this.canvas, this.paint, this);
+        }
+    }
+
+    private void produceEnemy() {
+        EnemyPlane enemyPlane = new EnemyPlane(this.getResources(), R.drawable.small, this.screenW, this.screenH);
+
+        enemyPlane.setX((float) (Math.random()*(this.screenW-enemyPlane.getW())));
+        enemyPlane.setY(-enemyPlane.getH());
+        enemyPlane.setSpeed(Game.ENEMYSPEED);
+        enemyPlane.setShootSpeed(Game.ENEMYSHOOTSPEED);
+        enemyPlanes.add(enemyPlane);
+    }
+
+    private void drawMyBullet() {
+
+        for(int i = 0; i < myBullets.size(); i++){
+            if(!myBullets.get(i).isLive()){
+                myBullets.remove(i);
+            }
+        }
+
+        for(int i = 0; i < myBullets.size(); i++){
+            myBullets.get(i).draw(this.canvas, this.paint, this);
+        }
+    }
+
+    private void drawBack() {
+        back.draw(this.canvas, this.paint, this);
+    }
+
+    private void drawMyPlane() {
+        myPlane.draw(this.canvas, this.paint, this);
+    }
+
+
 }

@@ -3,17 +3,40 @@ package com.example.my.Base;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.view.SurfaceView;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 
 import com.example.my.GameMainView;
 
 public class BaseObj {
 
-    private float x;
-    private float y;
-    private float w;
-    private float h;
+    private float X = 0;
+    private float Y = 0;
+    private float W;
+    private float H;
+    private boolean isLive = true;
     private long startTime = 0;
+    private long endTime = 0;
+
+    public int getLifeNum() {
+        return lifeNum;
+    }
+
+    public void setLifeNum(int lifeNum) {
+        this.lifeNum = lifeNum;
+    }
+
+    private int lifeNum = 1;
+
+    public boolean isBoom() {
+        return isBoom;
+    }
+
+    public void setBoom(boolean boom) {
+        isBoom = boom;
+    }
+
+    private boolean isBoom = false;
 
     public long getStartTime() {
         return startTime;
@@ -31,95 +54,118 @@ public class BaseObj {
         this.endTime = endTime;
     }
 
-    private long endTime = 0;
+    public float getScreenW() {
+        return screenW;
+    }
+
+    public void setScreenW(float screenW) {
+        this.screenW = screenW;
+    }
+
+    public float getScreenH() {
+        return screenH;
+    }
+
+    public void setScreenH(float screenH) {
+        this.screenH = screenH;
+    }
+
+    private float screenW;
+    private float screenH;
+
+    public float getX() {
+        return X;
+    }
+
+    public void setX(float x) {
+        X = x;
+    }
+
+    public float getY() {
+        return Y;
+    }
+
+    public void setY(float y) {
+        Y = y;
+    }
+
     public float getW() {
-        return w;
+        return W;
     }
+
     public void setW(float w) {
-        this.w = w;
+        W = w;
     }
+
     public float getH() {
-        return h;
+        return H;
     }
+
     public void setH(float h) {
-        this.h = h;
+        H = h;
     }
+
+    public boolean isLive() {
+        return isLive;
+    }
+
+    public void setLive(boolean live) {
+        isLive = live;
+    }
+
     public float getSpeed() {
         return speed;
     }
 
-    private float speed;
-    
     public void setSpeed(float speed) {
         this.speed = speed;
     }
 
-    protected Bitmap bitmap;
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
 
     public Resources getResources() {
         return resources;
     }
 
-    protected Resources resources;
+    public void setResources(Resources resources) {
+        this.resources = resources;
+    }
 
     public int getPic() {
         return pic;
     }
 
+    public void setPic(int pic) {
+        this.pic = pic;
+    }
+
+    private float speed = 1;
+    private Bitmap bitmap;
+    private Resources resources;
     private int pic;
 
-    private float screen_width;
-
-    public float getScreen_width() {
-        return screen_width;
-    }
-
-    public float getScreen_height() {
-        return screen_height;
-    }
-
-    private float screen_height;
-
-    public void setScreen_width(float screen_width) {
-        this.screen_width = screen_width;
-    }
-
-    public void setScreen_height(float screen_height) {
-        this.screen_height = screen_height;
-    }
-
-    public BaseObj(Resources resources, int pic){
+    public BaseObj(Resources resources, int pic, float screenW, float screenH){
         this.resources = resources;
         this.pic = pic;
-        initBipMap();
+        this.screenW = screenW;
+        this.screenH = screenH;
+        init();
     }
 
-    public void initBipMap() {
-        this.bitmap = BitmapFactory.decodeResource(resources, pic);
-        this.w = bitmap.getWidth();
-        this.h = bitmap.getHeight();
+    public void init() {
+        this.bitmap = BitmapFactory.decodeResource(this.resources, this.pic);
+        this.W = this.bitmap.getWidth();
+        this.H = this.bitmap.getHeight();
+    }
+
+    public void draw(Canvas canvas, Paint paint, GameMainView gameMainView){
 
     }
 
-    public float getX() {
-        return x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public void setX(float x) {
-        this.x = x;
-    }
-
-    public void setY(float y) {
-        this.y = y;
-    }
-
-    public void release() {
-        if (!this.bitmap.isRecycled()) {
-            this.bitmap.recycle();
-        }
-    }
 }
