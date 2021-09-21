@@ -11,12 +11,18 @@ import com.example.my.Constant.GameSound;
 import com.example.my.GameMainView;
 import com.example.my.GameSoundPool;
 import com.example.my.My.MyBullet;
+import com.example.my.MyTimer;
 import com.example.my.R;
 
 public class EnemyPlane extends BasePlane {
 
     private int index = 0;
-    private static int boomTime = 100;
+    private static int boomTime = 1;
+
+    public void setMoveDirection(int moveDirection) {
+        this.moveDirection = moveDirection;
+    }
+
     private int moveDirection = 1;
 
     public EnemyPlane(Resources resources, int pic, float screenW, float screenH) {
@@ -44,7 +50,7 @@ public class EnemyPlane extends BasePlane {
         int y = 0;
 
         if(this.isBoom() && index <=2){
-            this.setEndTime(System.currentTimeMillis());
+            this.setEndTime(MyTimer.getTime());
             if(this.getEndTime() - this.getStartTime() > boomTime){
                 this.setStartTime(this.getEndTime());
                 index++;
@@ -73,7 +79,7 @@ public class EnemyPlane extends BasePlane {
             this.setLive(false);
         }
 
-        this.setEndTime(System.currentTimeMillis());
+        this.setEndTime(MyTimer.getTime());
 
         if(this.getEndTime() - this.getStartTime() > this.getShootSpeed()){
             this.setStartTime(this.getEndTime());

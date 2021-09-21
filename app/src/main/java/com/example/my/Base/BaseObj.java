@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import com.example.my.GameMainView;
+import com.example.my.MainActivity;
 
 public class BaseObj {
 

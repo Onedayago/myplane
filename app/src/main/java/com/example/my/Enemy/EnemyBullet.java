@@ -17,8 +17,8 @@ public class EnemyBullet extends BaseBullet {
     public EnemyBullet(Resources resources, int pic, float screenW, float screenH) {
         super(resources, pic, screenW, screenH);
         this.src = new Rect(0, 0, (int)(this.getW()), (int) (this.getH()));
-        this.setW(this.getW()/2);
-        this.setH(this.getH()/2);
+        this.setW(this.getW()/3);
+        this.setH(this.getH()/3);
     }
 
     @Override

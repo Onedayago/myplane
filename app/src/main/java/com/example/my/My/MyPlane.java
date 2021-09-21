@@ -1,5 +1,8 @@
 package com.example.my.My;
 
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -13,11 +16,23 @@ import com.example.my.Constant.Game;
 import com.example.my.Constant.GameSound;
 import com.example.my.GameMainView;
 import com.example.my.GameSoundPool;
+import com.example.my.MainActivity;
+import com.example.my.MyTimer;
 import com.example.my.R;
 
 public class MyPlane extends BasePlane {
 
     private boolean isTouch;
+
+    public int getScoreNum() {
+        return scoreNum;
+    }
+
+    public void setScoreNum(int scoreNum) {
+        this.scoreNum = scoreNum;
+    }
+
+    private int scoreNum = 0;
 
     public MyPlane(Resources resources, int pic, float screenW, float screenH) {
         super(resources, pic, screenW, screenH);
@@ -32,14 +47,20 @@ public class MyPlane extends BasePlane {
 
     @Override
     public void draw(Canvas canvas, Paint paint, GameMainView gameMainView) {
+
         canvas.save();
+
+        if(this.getLifeNum()<=0){
+            this.setLive(false);
+            return;
+        }
 
         canvas.clipRect(this.getX(), this.getY(), this.getX()+this.getW(), this.getY()+this.getH());
         canvas.drawBitmap(this.getBitmap(), this.getX(), this.getY(), paint);
         canvas.restore();
 
 
-        this.setEndTime(System.currentTimeMillis());
+        this.setEndTime(MyTimer.getTime());
 
         if(this.getEndTime() - this.getStartTime() > this.getShootSpeed()){
             this.setStartTime(this.getEndTime());
